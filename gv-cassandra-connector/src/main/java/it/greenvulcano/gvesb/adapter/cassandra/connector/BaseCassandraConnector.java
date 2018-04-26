@@ -2,7 +2,6 @@ package it.greenvulcano.gvesb.adapter.cassandra.connector;
 
 import java.util.Objects;
 import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +10,6 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PlainTextAuthProvider;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
-
 import it.greenvulcano.gvesb.adapter.cassandra.CassandraConnector;
 
 public class BaseCassandraConnector implements CassandraConnector {
@@ -22,10 +20,18 @@ public class BaseCassandraConnector implements CassandraConnector {
 	private String contactPoints = "localhost";
 	private int port = ProtocolOptions.DEFAULT_PORT;	
 		
-	private String user, password, defaultKeyspace;
+	private String name, user, password, defaultKeyspace;
 	
 	private Cluster cluster;
 	
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public String getContactPoints() {
 		return contactPoints;
 	}
@@ -68,17 +74,20 @@ public class BaseCassandraConnector implements CassandraConnector {
 
 	public void init() {
 		
-		LOG.debug("Building Cluster instance");
+		LOG.debug("Building Cluster instance "+ Objects.requireNonNull(name));
 		
+				
 		AuthProvider authProvider = Objects.nonNull(user) && !user.trim().isEmpty()?
 											       new PlainTextAuthProvider(user, password):
 											       AuthProvider.NONE;
 		
 		cluster = Cluster.builder()
+				         .withClusterName(name)
 						 .addContactPoints(contactPoints.split(","))
 						 .withPort(port)
 						 .withAuthProvider(authProvider)
-						 .build();
+						 .build();	
+		
 	}
 	
 	
@@ -89,8 +98,9 @@ public class BaseCassandraConnector implements CassandraConnector {
 	
 	@Override
 	public Session getSession() {
-		LOG.debug("Building session instance, keyspace:"+defaultKeyspace);
+		LOG.debug("Building session instance, on cluster "+name+ " -  keyspace: "+defaultKeyspace);
 		Session session = Optional.ofNullable(defaultKeyspace).map(cluster::connect).orElseGet(cluster::connect);
+				
 		return session;
 	}
 	

@@ -29,6 +29,7 @@ import it.greenvulcano.configuration.ConfigurationListener;
 import it.greenvulcano.configuration.XMLConfig;
 import it.greenvulcano.gvesb.core.config.GreenVulcanoConfig;
 import it.greenvulcano.gvesb.virtual.OperationFactory;
+import it.greenvulcano.gvesb.virtual.cassandra.CassandraMetadataCallOperation;
 import it.greenvulcano.gvesb.virtual.cassandra.CassandraQueryCallOperation;
 
 public class Activator implements BundleActivator {
@@ -50,6 +51,7 @@ public class Activator implements BundleActivator {
 	@Override
 	public void start(BundleContext context) throws Exception {
 		OperationFactory.registerSupplier("cassandra-query-call", CassandraQueryCallOperation::new);
+		OperationFactory.registerSupplier("cassandra-metadata-call", CassandraMetadataCallOperation::new);
 		
 		CassandraChannel.setUp();		
 		XMLConfig.addConfigurationListener(configurationListener, GreenVulcanoConfig.getSystemsConfigFileName());
@@ -62,6 +64,7 @@ public class Activator implements BundleActivator {
 		XMLConfig.removeConfigurationListener(configurationListener);		
 		CassandraChannel.tearDown();
 		OperationFactory.unregisterSupplier("cassandra-query-call");
+		OperationFactory.unregisterSupplier("cassandra-metadata-call");
 
 	}
 

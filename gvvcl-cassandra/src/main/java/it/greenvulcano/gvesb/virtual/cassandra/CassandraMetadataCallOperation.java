@@ -28,15 +28,14 @@ import it.greenvulcano.gvesb.virtual.ConnectionException;
 import it.greenvulcano.gvesb.virtual.InitializationException;
 import it.greenvulcano.gvesb.virtual.InvalidDataException;
 import it.greenvulcano.gvesb.virtual.OperationKey;
-import it.greenvulcano.gvesb.virtual.cassandra.mapping.JSONResultSetMapper;
-import it.greenvulcano.util.metadata.PropertiesHandler;
+import it.greenvulcano.gvesb.virtual.cassandra.mapping.JSONMetadataMapper;
 
 import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.w3c.dom.Node;
 
-import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Session;
 
 /**
@@ -44,21 +43,21 @@ import com.datastax.driver.core.Session;
  * @version 4.0 23/april/2018
  * @author GreenVulcano Developer Team
  */
-public class CassandraQueryCallOperation implements CallOperation {
+public class CassandraMetadataCallOperation implements CallOperation {
 
-	public interface ResultSetMapper<T> {
+	public interface MetadataMapper<T> {
 
-		T map(ResultSet resultSet);
+		T map(Metadata metadata);
 
 	}
 
-	private static final Logger logger = org.slf4j.LoggerFactory.getLogger(CassandraQueryCallOperation.class);
+	private static final Logger logger = org.slf4j.LoggerFactory.getLogger(CassandraMetadataCallOperation.class);
 	private OperationKey key = null;
 
-	private String name, statement;
+	private String name;
 	private Session session;
 
-	private ResultSetMapper<?> mapper;
+	private MetadataMapper<?> mapper;
 
 	@Override
 	public void init(Node node) throws InitializationException {
@@ -66,12 +65,11 @@ public class CassandraQueryCallOperation implements CallOperation {
 		try {
 			name = XMLConfig.get(node, "@name");
 
-			logger.debug("Init cassandra-query-call " + name);
+			logger.debug("Init cassandra-metadata-call " + name);
 
-			statement = Objects.requireNonNull(XMLConfig.get(node, "./statement/text()"), "Missing statement");
 			session = Objects.requireNonNull(CassandraChannel.getSession(node), "Active session not found");
 
-			mapper = new JSONResultSetMapper();
+			mapper = new JSONMetadataMapper();
 
 		} catch (Exception exc) {
 			throw new InitializationException("GV_INIT_SERVICE_ERROR",
@@ -85,12 +83,7 @@ public class CassandraQueryCallOperation implements CallOperation {
 
 		try {
 
-			String query = PropertiesHandler.expand(statement, gvBuffer);
-
-			logger.debug("Executing statement " + query);
-
-			ResultSet queryResult = session.execute(query);
-			gvBuffer.setObject(mapper.map(queryResult));
+			gvBuffer.setObject(mapper.map(session.getCluster().getMetadata()));
 
 		} catch (Exception exc) {
 			throw new CallException("GV_CALL_SERVICE_ERROR",
