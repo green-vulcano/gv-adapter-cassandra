@@ -2,9 +2,31 @@
 ### GV ESB v4 adapter for Apache Cassandra
 
 Provides integration with Cassandra DB, includes call operations:
- - `cassandra-metadata-call`
- - `cassandra-query-call`
- 
+ - `cassandra-metadata-call`: return a JSON representation of database structure
+     ```
+     {
+      "keyspace": {
+         "name" : <string>,
+         "functions": [<array of strings>],
+         "materializedViews": [<array of strings>],
+         "userTypes": [<array of strings>],
+         "tables"[ { 
+                        "name" :  <string>,
+                        "columns": [ {"name":<string>, "type":<string>, ...}]
+                     }, ...
+        ]
+
+      }, ...
+    }
+    ```
+ - `cassandra-query-call`: return a JSON representation of query resultset
+    ```
+    [
+      {"col1" : "val1", "col2" : val2, ...},
+      {"col1" : "val1", "col2" : val2, ...}, 
+      ...
+    ]
+    ```
 ## Usage
   1. Install connector bundle: `bundle:install -s mvn:it.greenvulcano.gvesb.adapter/gv-cassandra-connector/4.0.0-SNAPSHOT` (requires native lib `libjffi-1.2.so` in `<KARAF_HOME>/lib`)
   2. Configure a db connection with blueprint:
