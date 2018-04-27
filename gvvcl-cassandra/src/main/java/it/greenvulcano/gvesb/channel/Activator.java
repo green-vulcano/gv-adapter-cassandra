@@ -37,23 +37,19 @@ public class Activator implements BundleActivator {
 	
 	private final static ConfigurationListener configurationListener = event-> {
 		
-		LOG.debug("GV ESB Kafka plugin module - handling configuration event");
+		LOG.debug("GV ESB Cassandra plugin module - handling configuration event");
 		
 		if ((event.getCode() == ConfigurationEvent.EVT_FILE_REMOVED) && event.getFile().equals(GreenVulcanoConfig.getSystemsConfigFileName())) {
-			CassandraChannel.tearDown();
+			CassandraChannel.shutdown();
 		}
-		
-		if ((event.getCode() == ConfigurationEvent.EVT_FILE_LOADED) && event.getFile().equals(GreenVulcanoConfig.getSystemsConfigFileName())) {
-			CassandraChannel.setUp();
-		}
+	
 	};
 
 	@Override
 	public void start(BundleContext context) throws Exception {
 		OperationFactory.registerSupplier("cassandra-query-call", CassandraQueryCallOperation::new);
 		OperationFactory.registerSupplier("cassandra-metadata-call", CassandraMetadataCallOperation::new);
-		
-		CassandraChannel.setUp();		
+			
 		XMLConfig.addConfigurationListener(configurationListener, GreenVulcanoConfig.getSystemsConfigFileName());
 
 	}
@@ -62,7 +58,7 @@ public class Activator implements BundleActivator {
 	public void stop(BundleContext context) throws Exception {
 		
 		XMLConfig.removeConfigurationListener(configurationListener);		
-		CassandraChannel.tearDown();
+
 		OperationFactory.unregisterSupplier("cassandra-query-call");
 		OperationFactory.unregisterSupplier("cassandra-metadata-call");
 

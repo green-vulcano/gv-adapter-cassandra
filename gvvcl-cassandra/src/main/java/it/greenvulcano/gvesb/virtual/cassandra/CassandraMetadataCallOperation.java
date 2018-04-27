@@ -29,6 +29,7 @@ import it.greenvulcano.gvesb.virtual.InitializationException;
 import it.greenvulcano.gvesb.virtual.InvalidDataException;
 import it.greenvulcano.gvesb.virtual.OperationKey;
 import it.greenvulcano.gvesb.virtual.cassandra.mapping.JSONMetadataMapper;
+import it.greenvulcano.util.metadata.PropertiesHandler;
 
 import java.util.Objects;
 
@@ -54,8 +55,8 @@ public class CassandraMetadataCallOperation implements CallOperation {
 	private static final Logger logger = org.slf4j.LoggerFactory.getLogger(CassandraMetadataCallOperation.class);
 	private OperationKey key = null;
 
-	private String name;
-	private Session session;
+	private String name, endpoint, keyspace;
+	
 
 	private MetadataMapper<?> mapper;
 
@@ -64,12 +65,12 @@ public class CassandraMetadataCallOperation implements CallOperation {
 		logger.debug("Init cassandra-query-call");
 		try {
 			name = XMLConfig.get(node, "@name");
-
-			logger.debug("Init cassandra-metadata-call " + name);
-
-			session = Objects.requireNonNull(CassandraChannel.getSession(node), "Active session not found");
-
+			endpoint = Objects.requireNonNull(XMLConfig.get(node.getParentNode(), "@endpoint"), "Missing cluster connector endpoint");
+			keyspace = XMLConfig.get(node, "@keyspace");
+			
 			mapper = new JSONMetadataMapper();
+			
+			logger.debug("Init cassandra-metadata-call " + name);
 
 		} catch (Exception exc) {
 			throw new InitializationException("GV_INIT_SERVICE_ERROR",
@@ -82,6 +83,11 @@ public class CassandraMetadataCallOperation implements CallOperation {
 	public GVBuffer perform(GVBuffer gvBuffer) throws ConnectionException, CallException, InvalidDataException {
 
 		try {
+			
+			String jndiname = PropertiesHandler.expand(this.endpoint, gvBuffer);
+			String keyspace = PropertiesHandler.expand(this.keyspace, gvBuffer);
+			
+			Session session = Objects.requireNonNull(CassandraChannel.getSession(jndiname, keyspace), "Active session not found");
 
 			gvBuffer.setObject(mapper.map(session.getCluster().getMetadata()));
 

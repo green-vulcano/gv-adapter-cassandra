@@ -55,9 +55,8 @@ public class CassandraQueryCallOperation implements CallOperation {
 	private static final Logger logger = org.slf4j.LoggerFactory.getLogger(CassandraQueryCallOperation.class);
 	private OperationKey key = null;
 
-	private String name, statement;
-	private Session session;
-
+	private String name, statement, endpoint, keyspace;
+	
 	private ResultSetMapper<?> mapper;
 
 	@Override
@@ -65,13 +64,13 @@ public class CassandraQueryCallOperation implements CallOperation {
 		logger.debug("Init cassandra-query-call");
 		try {
 			name = XMLConfig.get(node, "@name");
-
-			logger.debug("Init cassandra-query-call " + name);
-
+			endpoint = Objects.requireNonNull(XMLConfig.get(node.getParentNode(), "@endpoint"), "Missing cluster connector endpoint");
+			keyspace = XMLConfig.get(node, "@keyspace");
 			statement = Objects.requireNonNull(XMLConfig.get(node, "./statement/text()"), "Missing statement");
-			session = Objects.requireNonNull(CassandraChannel.getSession(node), "Active session not found");
-
+			
 			mapper = new JSONResultSetMapper();
+			
+			logger.debug("Init cassandra-query-call " + name);
 
 		} catch (Exception exc) {
 			throw new InitializationException("GV_INIT_SERVICE_ERROR",
@@ -84,6 +83,11 @@ public class CassandraQueryCallOperation implements CallOperation {
 	public GVBuffer perform(GVBuffer gvBuffer) throws ConnectionException, CallException, InvalidDataException {
 
 		try {
+			
+			String jndiname = PropertiesHandler.expand(this.endpoint, gvBuffer);
+			String keyspace = PropertiesHandler.expand(this.keyspace, gvBuffer);
+			
+			Session session = Objects.requireNonNull(CassandraChannel.getSession(jndiname, keyspace), "Active session not found");
 
 			String query = PropertiesHandler.expand(statement, gvBuffer);
 

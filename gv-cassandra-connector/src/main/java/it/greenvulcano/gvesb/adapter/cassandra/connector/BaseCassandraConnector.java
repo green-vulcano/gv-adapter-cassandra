@@ -103,6 +103,14 @@ public class BaseCassandraConnector implements CassandraConnector {
 				
 		return session;
 	}
+
+	@Override
+	public Session getSession(String keyspace) {
+		LOG.debug("Building session instance, on cluster "+name+ " -  keyspace: "+keyspace);
+		Session session = Optional.ofNullable(keyspace).map(cluster::connect).orElseGet(this::getSession);
+				
+		return session;
+	}
 	
 	
 
