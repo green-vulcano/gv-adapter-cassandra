@@ -24,7 +24,7 @@
 
 		<osgi.version>5.0.0</osgi.version>
 		<pax-logging.version>1.9.1</pax-logging.version>
-		<junit.version>4.11</junit.version>
+		<junit.version>4.13.1</junit.version>
 
 		<cassandra-driver.version>3.1.4</cassandra-driver.version>
 
